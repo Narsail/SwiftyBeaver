@@ -49,13 +49,13 @@ public class BaseDestination: Hashable, Equatable {
 
     // each destination class must have an own hashValue Int
     lazy public var hashValue: Int = self.defaultHashValue
-    var defaultHashValue: Int {return 0}
+    public var defaultHashValue: Int {return 0}
     
     // each destination instance must have an own serial queue to ensure serial output
     // GCD gives it a prioritization between User Initiated and Utility
     var queue: dispatch_queue_t?
     
-    init() {
+    public init() {
         let uuid = NSUUID().UUIDString
         let queueLabel = "swiftybeaver-queue-" + uuid
         queue = dispatch_queue_create(queueLabel, nil)
@@ -70,13 +70,13 @@ public class BaseDestination: Hashable, Equatable {
     /// send / store the formatted log message to the destination
     /// returns the formatted log message for processing by inheriting method
     /// and for unit tests (nil if error)
-    func send(level: SwiftyBeaver.Level, msg: String, path: String, function: String, line: Int) -> String? {
+    public func send(level: SwiftyBeaver.Level, msg: String, thread: String, path: String, function: String, line: Int) -> String? {
         var dateStr = ""
         var str = ""
         let levelStr = formattedLevel(level)
         
         dateStr = formattedDate(dateFormat)
-        str = formattedMessage(dateStr, levelString: levelStr, msg: msg, path: path,
+        str = formattedMessage(dateStr, levelString: levelStr, msg: msg, thread: thread, path: path,
             function: function, line: line, detailOutput: detailOutput)
         return str
     }
@@ -126,7 +126,7 @@ public class BaseDestination: Hashable, Equatable {
     
     /// returns the formatted log message
     func formattedMessage(dateString: String, levelString: String, msg: String,
-        path: String, function: String, line: Int, detailOutput: Bool) -> String {
+        thread: String, path: String, function: String, line: Int, detailOutput: Bool) -> String {
         // just use the file name of the path and remove suffix
         let file = path.componentsSeparatedByString("/").last!.componentsSeparatedByString(".").first!
         var str = ""
@@ -134,6 +134,10 @@ public class BaseDestination: Hashable, Equatable {
              str += "[\(dateString)] "
         }
         if detailOutput {
+            if thread != "main" && thread != "" {
+                str += "|\(thread)| "
+            }
+            
             str += "\(file).\(function):\(line) \(levelString): \(msg)"
         } else {
             str += "\(levelString): \(msg)"
